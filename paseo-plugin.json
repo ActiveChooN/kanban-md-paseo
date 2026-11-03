@@ -9,5 +9,6 @@
   ],
   "requirements": {
     "paseo": "^0.13.2 || ^0.14.0 || ^0.15.0"
-  }
+  },
+  "build": [["npm", "ci", "--omit=dev", "--ignore-scripts"]]
 }
