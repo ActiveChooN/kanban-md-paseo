@@ -1,0 +1,59 @@
+{
+  "name": "@activechoon/kanban-md-paseo",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A Paseo workspace panel for kanban-md tickets: browse, edit and launch agents on Markdown tickets.",
+  "keywords": [
+    "paseo",
+    "paseo-plugin",
+    "kanban",
+    "kanban-md",
+    "agents"
+  ],
+  "license": "MIT",
+  "author": "Dmitry Kalinin",
+  "homepage": "https://github.com/ActiveChooN/kanban-md-paseo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ActiveChooN/kanban-md-paseo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ActiveChooN/kanban-md-paseo/issues"
+  },
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "index.client.tsx",
+    "index.server.ts",
+    "client/",
+    "server/",
+    "shared/",
+    "assets/",
+    "npm-shrinkwrap.json",
+    "!**/*.test.*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:host": "node tests/isolated-host.mjs"
+  },
+  "devDependencies": {
+    "@getpaseo/client": "0.13.2",
+    "@getpaseo/plugin": "0.13.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "~19.2.0",
+    "playwright-core": "1.59.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-test-renderer": "19.2.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.6",
+    "zod": "^4.4.3"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
+  }
+}

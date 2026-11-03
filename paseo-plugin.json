@@ -1,0 +1,13 @@
+{
+  "id": "kanban-md",
+  "name": "Kanban",
+  "description": "Browse and edit kanban-md tickets in a workspace panel, then launch agents on them.",
+  "media": [
+    "assets/screenshots/board.png",
+    "assets/screenshots/implement-dialog.png",
+    "assets/screenshots/attach-ticket.png"
+  ],
+  "requirements": {
+    "paseo": "^0.13.2 || ^0.14.0 || ^0.15.0"
+  }
+}

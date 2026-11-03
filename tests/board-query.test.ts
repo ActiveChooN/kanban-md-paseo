@@ -1,0 +1,142 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { BoardQuery, getBoardQuery } from "../client/board-query";
+import { boardQueryKey } from "../client/board-view";
+import type { BoardReadResult } from "../shared/board";
+import { config, ticket } from "./ticket-fixtures";
+
+const board = { kind: "ready", boardId: ticket.boardId, projectId: "p", config, tickets: [ticket] } satisfies BoardReadResult;
+function deferred() {
+  let resolve!: (result: BoardReadResult) => void;
+  const promise = new Promise<BoardReadResult>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+afterEach(() => vi.useRealTimers());
+
+it("polls once per shared board and stops when its last active panel leaves", async () => {
+  vi.useFakeTimers();
+  const query = new BoardQuery();
+  const read = vi.fn(async () => board);
+  const second = vi.fn(async () => board);
+  const stop = query.activate(read);
+  const stopSecond = query.activate(second);
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(read).toHaveBeenCalledTimes(4);
+  expect(second).not.toHaveBeenCalled();
+  stop();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(second).toHaveBeenCalledTimes(1);
+  stopSecond();
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(second).toHaveBeenCalledTimes(1);
+  expect(vi.getTimerCount()).toBe(0);
+});
+it("does not reuse a pre-mutation read and ignores it when responses reverse", async () => {
+  const query = new BoardQuery();
+  query.seed(board);
+  const before = deferred();
+  const after = deferred();
+  const oldRead = query.refresh(false, () => before.promise);
+  expect(query.beginWrite()).toBe(true);
+  expect(query.beginWrite()).toBe(false);
+  query.endWrite(false);
+  const newRead = query.refresh(false, () => after.promise);
+  expect(newRead).not.toBe(oldRead);
+  const updated = { ...board, tickets: [{ ...ticket, title: "Saved" }] };
+  after.resolve(updated);
+  await newRead;
+  before.resolve(board);
+  expect(await oldRead).toBeUndefined();
+  expect(query.getSnapshot().lastReady).toEqual(updated);
+});
+it("manual refresh supersedes both successful and failed older requests", async () => {
+  const query = new BoardQuery();
+  const first = deferred();
+  const old = query.refresh(false, () => first.promise);
+  await query.refresh(true, async () => board);
+  first.resolve({ kind: "error", code: "timeout", message: "old timeout", cliCode: null });
+  await old;
+  expect(query.getSnapshot().data).toEqual(board);
+  expect(query.getSnapshot().stale).toBe(false);
+});
+it("retains data on failure and requires a fresh successful read plus inspection after an uncertain write", async () => {
+  const query = new BoardQuery();
+  query.seed(board);
+  const sibling = vi.fn();
+  const unsubscribe = query.subscribe(sibling);
+  query.beginWrite();
+  query.endWrite(true);
+  query.acknowledge();
+  expect(query.beginWrite()).toBe(false);
+  await query.refresh(true, async () => { throw new Error("offline"); });
+  expect(query.getSnapshot().lastReady).toEqual(board);
+  expect(query.getSnapshot().stale).toBe(true);
+  query.acknowledge();
+  expect(query.beginWrite()).toBe(false);
+  await query.refresh(true, async () => board);
+  expect(query.getSnapshot().write).toBe("review");
+  expect(query.beginWrite()).toBe(false);
+  query.acknowledge();
+  expect(query.canWrite).toBe(true);
+  expect(sibling).toHaveBeenCalled();
+  unsubscribe();
+});
+it("keeps an unresolved write gate across unmount while releasing ordinary board data", async () => {
+  const key = boardQueryKey("retained-host", "/board");
+  const query = getBoardQuery(key);
+  const stop = query.subscribe(() => {});
+  query.seed(board);
+  query.beginWrite(); query.endWrite(true);
+  stop();
+  await Promise.resolve();
+  expect(getBoardQuery(key)).toBe(query);
+  await query.refresh(true, async () => board);
+  query.acknowledge();
+  const release = query.subscribe(() => {});
+  release();
+  await Promise.resolve();
+  expect(getBoardQuery(key)).not.toBe(query);
+});
+it("ignores a departed workspace reader even while a sibling remains active", async () => {
+  const query = new BoardQuery();
+  const old = deferred();
+  const first = query.activate(() => old.promise);
+  const second = query.activate(async () => board);
+  first();
+  await query.refresh();
+  old.resolve({ ...board, boardId: "/obsolete-project" });
+  await old.promise;
+  await Promise.resolve();
+  expect(query.getSnapshot().lastReady?.boardId).toBe("/board");
+  second();
+});
+it("does not accept a response after the last panel becomes inactive", async () => {
+  const query = new BoardQuery();
+  const pending = deferred();
+  const stop = query.activate(() => pending.promise);
+  stop();
+  pending.resolve(board);
+  await pending.promise;
+  await Promise.resolve();
+  expect(query.getSnapshot().lastReady).toBeNull();
+});
+it("marks a removed board stale while retaining the last usable snapshot", async () => {
+  const query = new BoardQuery();
+  query.seed(board);
+  await query.refresh(true, async () => ({ kind: "missing", boardId: board.boardId, projectId: board.projectId }));
+  expect(query.getSnapshot().lastReady).toEqual(board);
+  expect(query.getSnapshot().stale).toBe(true);
+  expect(query.canWrite).toBe(false);
+});
+it("releases an idle board when a write finishes after its panel unmounts", async () => {
+  const key = "write-finished-after-unmount";
+  const query = getBoardQuery(key);
+  query.seed(board);
+  const unsubscribe = query.subscribe(() => {});
+  query.beginWrite();
+  unsubscribe();
+  await Promise.resolve();
+  expect(getBoardQuery(key)).toBe(query);
+  query.endWrite(false);
+  await Promise.resolve();
+  expect(getBoardQuery(key)).not.toBe(query);
+});
