@@ -27,6 +27,8 @@ it("opens the registered workspace panel, registers the ticket attachment source
       commands.set(command.id, command);
       return () => commands.delete(command.id);
     },
+    // Header buttons have their own test; this only needs a list that never resolves.
+    paseo: { workspaces: { list: () => new Promise(() => {}) } },
   };
 
   for (let reload = 0; reload < 2; reload++) {

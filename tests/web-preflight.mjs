@@ -18,9 +18,17 @@ export async function checkWebHost({ url, env, reloadPlugin }) {
     await page.waitForTimeout(3000);
     assert.deepEqual(errors, []);
     await page.getByText("Main test workspace", { exact: true }).click();
-    await page.keyboard.press("Control+k");
+    // Compact layouts have no panel picker or Command Center; the header button lands in Workspace actions.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: /^Workspace actions/ }).click();
     await page.getByText("Open Kanban", { exact: true }).click();
     const search = page.getByRole("textbox", { name: "Search tickets by ID or title" });
+    await search.waitFor();
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    // Column headings only render in the wide layout, so the resize has settled.
+    await page.getByRole("heading", { name: "backlog", exact: true }).waitFor();
+    await page.keyboard.press("Control+k");
+    await page.getByText("Open Kanban", { exact: true }).click();
     await search.waitFor();
     assert.equal(await page.getByRole("heading", { name: "backlog", exact: true }).count(), 1);
     assert.equal(await page.getByRole("heading", { name: "in-progress", exact: true }).count(), 1);
@@ -95,6 +103,6 @@ export async function checkWebHost({ url, env, reloadPlugin }) {
     await page.getByRole("button", { name: "Inspect launch #4", exact: true }).click();
     assert.equal(await instructions.inputValue(), prompt);
     assert.deepEqual(errors, []);
-    console.log("Official client wide/compact board, themes, keyboard, focus return, reconnect, filters and launch recovery across page/plugin reload passed.");
+    console.log("Official client compact Workspace actions entry, wide/compact board, themes, keyboard, focus return, reconnect, filters and launch recovery across page/plugin reload passed.");
   } finally { await browser.close(); }
 }

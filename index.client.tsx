@@ -1,4 +1,5 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
+import { addKanbanHeaderButtons } from "./client/header-buttons";
 import { KanbanPanel } from "./client/kanban-panel";
 import { ticketAttachmentSource } from "./shared/attachments";
 
@@ -19,8 +20,10 @@ export default function contribute(client: PluginClientContext) {
     },
   });
   const removeAttachmentSource = client.addAttachmentSource(ticketAttachmentSource);
+  const removeHeaderButtons = addKanbanHeaderButtons(client, "kanban");
 
   return () => {
+    removeHeaderButtons();
     removeAttachmentSource();
     removeCommand();
     removePanel();
