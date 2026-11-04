@@ -33,7 +33,7 @@ The plugin ID is `kanban-md`. Use `paseo plugin logs kanban-md` when something l
 
 ## Usage
 
-Open **Kanban** from the workspace panel picker or the Command Center.
+Open **Kanban** from the workspace panel picker or the Command Center. On mobile, use **Open Kanban** in the workspace actions (⋯) menu.
 
 Every workspace in a project, including sibling worktrees, shares one board at `<projectRootPath>/kanban`. If there's no board, the panel offers to create one. A broken or incomplete board shows an error and is never overwritten.
 
