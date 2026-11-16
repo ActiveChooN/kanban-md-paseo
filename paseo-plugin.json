@@ -8,7 +8,7 @@
     "assets/screenshots/attach-ticket.png"
   ],
   "requirements": {
-    "paseo": "^0.13.2 || ^0.14.0 || ^0.15.0"
+    "paseo": "^0.13.2 || ^0.14.0 || ^0.15.0 || ^0.16.0"
   },
   "build": [["npm", "ci", "--omit=dev", "--ignore-scripts"]]
 }
