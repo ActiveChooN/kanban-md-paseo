@@ -6,7 +6,7 @@ Every workspace in a project, including sibling worktrees, uses the board at `<p
 
 ## Setup
 
-Requires Paseo `^0.13.2 || ^0.14.0 || ^0.15.0` and kanban-md 0.39.x on the daemon's PATH. Launching into a new worktree needs Git.
+Requires Paseo `^0.13.2 || ^0.14.0 || ^0.15.0 || ^0.16.0` and kanban-md 0.39.x on the daemon's PATH. Launching into a new worktree needs Git.
 
 ## Data
 
